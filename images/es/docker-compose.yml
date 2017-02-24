@@ -1,0 +1,14 @@
+version: '2'
+
+services:
+  es:
+    restart: always
+    build: .
+    environment:
+      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      - TERM=xterm
+      - ES_HEAPSIZE=2g
+        #- JVM_OPTIONS="--security-opt seccomp=unconfined"
+    ports:
+      - "29200:9200"
+      - "29300:9300"

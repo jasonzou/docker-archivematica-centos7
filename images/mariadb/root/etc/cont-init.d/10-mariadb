@@ -1,0 +1,54 @@
+#!/usr/bin/with-contenv sh
+
+if [ -z ${MARIADB_CONFIG} ]; then
+    if [ -z ${MARIADB_CONFIGSCRIPT} ]; then
+        echo "==> Configuring mariadb from environment"
+
+        mkdir -p /var/run/mysqld
+        chown -R mysql:root /var/run/mysqld
+        mysql_install_db --basedir=/usr --datadir=/var/lib/mysql --user=mysql --console
+
+        /usr/bin/mysqld_safe --skip-networking &
+        sleep 4
+
+        if [ -z ${MARIADB_ROOTPASSWORD} ]; then
+            echo "MARIADB_ROOTPASSWORD is not set, aborting"
+            exit 1
+        fi
+
+        mysql -u root -e " \
+        UPDATE user SET password=PASSWORD('${MARIADB_ROOTPASSWORD}') WHERE User='root'; \
+        DROP DATABASE test; \
+        DELETE FROM mysql.user WHERE User=''; \
+        FLUSH PRIVILEGES; \
+        " mysql
+
+        if [ ! -z ${MARIADB_ROOTHOSTMASK} ]; then
+            mysql -u root -p"${MARIADB_ROOTPASSWORD}" -e " \
+            GRANT ALL ON *.* TO 'root'@'${MARIADB_ROOTHOSTMASK}' IDENTIFIED BY '${MARIADB_ROOTPASSWORD}' WITH GRANT OPTION; \
+            GRANT ALL ON *.* TO 'root'@'localhost' IDENTIFIED BY '${MARIADB_ROOTPASSWORD}' WITH GRANT OPTION; \
+            GRANT ALL ON *.* TO 'root'@'${CONTAINER_ROOTHOSTMASK}' IDENTIFIED BY '${MARIADB_ROOTPASSWORD}' WITH GRANT OPTION; \
+            FLUSH PRIVILEGES; \
+            " mysql
+        fi
+
+        if [ ! -z ${MARIADB_DATABASE} ] && [ ! -z ${MARIADB_USERNAME} ] && [ ! -z ${MARIADB_PASSWORD} ] && [ ! -z ${MARIADB_HOSTMASK} ]; then
+            mysql -u root -p"${MARIADB_ROOTPASSWORD}" -e " \
+            CREATE DATABASE \`${MARIADB_DATABASE}\`; \
+            CREATE USER '${MARIADB_USERNAME}'@'${MARIADB_HOSTMASK}' IDENTIFIED BY '${MARIADB_PASSWORD}'; \
+            GRANT ALL ON \`${MARIADB_DATABASE}\`.* TO '${MARIADB_USERNAME}'@'${MARIADB_HOSTMASK}'; \
+            FLUSH PRIVILEGES; \
+            " mysql
+        fi
+    else
+        echo "==> Configuring mariadb from script"
+
+        /bin/sh ${MARIADB_CONFIGSCRIPT} ${MARIADB_ROOTPASSWORD}
+    fi
+
+    mysqladmin -u root -p"${MARIADB_ROOTPASSWORD}" shutdown
+    sleep 4
+
+    export MARIADB_CONFIG=1
+    printf "%s" "${MARIADB_CONFIG}" > /var/run/s6/container_environment/MARIADB_CONFIG
+fi

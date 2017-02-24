@@ -1,0 +1,17 @@
+#!/usr/bin/with-contenv sh
+
+exec s6-setuidgid elasticsearch /usr/bin/java -server \
+    ${JVM_OPTIONS} \
+    -XX:+DisableExplicitGC \
+    -Djava.awt.headless=true \
+    -Dfile.encoding=utf-8 \
+    -Xms${ES_HEAPSIZE} -Xmx${ES_HEAPSIZE} \
+    -Des.path.conf=/opt/elasticsearch/config/ \
+    -Des.path.home=/opt/elasticsearch \
+    -Des.default.path.data=/opt/elasticsearch/data \
+    -Des.default.path.plugins=/opt/elasticsearch/plugins \
+    -Des.default.path.work=/opt/elastisearch/tmp \
+    -Des.default.path.logs=/opt/elasticsearch/logs \
+    -Des.default.path.scripts=/opt/elasticsearch/bin \
+    -cp '/opt/elasticsearch/lib/*' \
+    org.elasticsearch.bootstrap.Elasticsearch start
