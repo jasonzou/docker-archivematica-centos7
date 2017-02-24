@@ -1,4 +1,4 @@
-FROM localhost:5000/openjdk8
+FROM localhost:5000/alpine-base
 MAINTAINER Jason Zou <jason.zou@gmail.com>
 
 ENV ELASTICSEARCH_MAJOR 1.7
