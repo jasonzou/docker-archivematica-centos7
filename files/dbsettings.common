@@ -1,0 +1,6 @@
+[client]
+user=archivematica
+password=demo
+host=mariadb
+database=MCP
+

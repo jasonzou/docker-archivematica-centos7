@@ -1,0 +1,5 @@
+[archivematica-extras]
+name=archivematica-extras
+baseurl=https://packages.archivematica.org/1.5.x/centos-extras
+gpgcheck=0
+enabled=1

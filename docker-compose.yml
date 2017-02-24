@@ -1,0 +1,56 @@
+version: '2'
+
+services: 
+  archivematica: 
+    build: .
+    privileged: true
+    restart: unless-stopped
+    environment: 
+      - Archivematica_ADMIN=admin
+      - Archivematica_PASSWORD=passwd
+      - PMA_HOST=mariadb
+    links: 
+      - mariadb:db
+      - es
+    ports:
+      - "8001:8001"
+      - "8222:22"
+      - "81:81"
+    volumes:
+      - "./data:/home"
+
+  mariadb:
+    image: localhost:5000/mariadb
+    restart: unless-stopped
+    environment:
+      - MARIADB_ROOTPASSWORD=mariadb     # root password
+      - MARIADB_ROOTHOSTMASK=172.%.%.%   # root user hostmask (optional)
+      - MARIADB_DATABASE=MCP             # create database
+      - MARIADB_USERNAME=archivematica   # grant user name
+      - MARIADB_PASSWORD=demo            # grant user password 
+      - MARIADB_HOSTMASK=%    
+      - CONTAINER_ROOTHOSTMASK=192.168.%.%
+    ports:
+      - "33306:3306"
+  es:
+    image: localhost:5000/es:1.7.5
+    restart: unless-stopped
+    environment:
+      - ES_HEAPSIZE=4g
+    ports:
+      - "39200:9200"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      - MYSQL_ROOTPASSWORD=mariadb     # root password
+      - MYSQL_USER=exhibition          # grant user name
+      - MYSQL_PASSWORD=hewlett1        # grant user password 
+      - MARIADB_DATABASE=exhibition          # create database
+      - MARIADB_ROOTHOSTMASK=172.%.%.%   # root user hostmask (optional)
+      - MARIADB_HOSTMASK=172.%.%.%
+      - CONTAINER_ROOTHOSTMASK=192.168.%.%
+    links:
+      - mariadb:db
+    ports:
+      - "9999:80"
